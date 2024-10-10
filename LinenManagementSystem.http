@@ -1,0 +1,6 @@
+@LinenManagementSystem_HostAddress = http://localhost:5278
+
+GET {{LinenManagementSystem_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
