@@ -11,11 +11,12 @@ namespace LinenManagementSystem.Data
         }
 
         // Define the DbSet for CartLog and other entities
-        public DbSet<CartLog> CartLogs { get; set; }
-        public DbSet<Cart> Carts { get; set; }
+        public DbSet<CartLog> CartLog { get; set; }
+        public DbSet<Carts> Carts { get; set; }
         public DbSet<Linen> Linens { get; set; }
         public DbSet<Location> Locations { get; set; }
-        public DbSet<Employee> Employees { get; set; }
+        public DbSet<Employees> Employees { get; set; }
+        public DbSet<CartLogDetail> CartLogDetails { get; set; }
 
         // Add additional DbSets as needed
     }

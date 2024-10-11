@@ -1,9 +1,10 @@
-
+using System.ComponentModel.DataAnnotations; 
 namespace LinenManagementSystem.Models
 {
     public class Location
     {
-        public int LocationId { get; set; }
+        [Key]
+        public required int LocationId { get; set; }
         public required string Name { get; set; }
         public required string Type { get; set; }
     }

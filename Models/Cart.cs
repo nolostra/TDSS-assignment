@@ -1,10 +1,12 @@
+using System.ComponentModel.DataAnnotations; 
 namespace LinenManagementSystem.Models
 {
-     public class Cart
+     public class Carts
     {
-        public int CartId { get; set; }
+        [Key]
+        public required int CartId { get; set; }
         public required string Name { get; set; }
-        public double Weight { get; set; }
+        public required double Weight { get; set; }
         public required string Type { get; set; }
     }
 }
