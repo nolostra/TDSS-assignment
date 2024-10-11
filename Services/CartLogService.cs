@@ -8,9 +8,9 @@ namespace LinenManagementSystem.Services
 {
     public interface ICartLogService
     {
-        Task<CartLog> GetCartLogByIdAsync(int cartLogId);
+        Task<CartLogFetch?> GetCartLogByIdAsync(int cartLogId);
         Task<IEnumerable<CartLog>> GetCartLogsAsync(string cartType, string location, int? employeeId);
-        Task<CartLog> UpsertCartLogAsync(CartLog cartLog, int employeeId);
+        Task<CartLog> UpsertCartLogAsync(CartLogInsert cartLog, int employeeId);
         Task<bool> DeleteCartLogAsync(int cartLogId, int employeeId);
     }
 
@@ -23,7 +23,7 @@ namespace LinenManagementSystem.Services
             _cartLogRepository = cartLogRepository;
         }
 
-        public Task<CartLog> GetCartLogByIdAsync(int cartLogId)
+        public Task<CartLogFetch?> GetCartLogByIdAsync(int cartLogId)
         {
             return _cartLogRepository.GetCartLogByIdAsync(cartLogId);
         }
@@ -33,7 +33,7 @@ namespace LinenManagementSystem.Services
             return _cartLogRepository.GetCartLogsAsync(cartType, location, employeeId);
         }
 
-        public async Task<CartLog> UpsertCartLogAsync(CartLog cartLog, int employeeId)
+        public async Task<CartLog> UpsertCartLogAsync(CartLogInsert cartLog, int employeeId)
         {
             // Ensure that only the creator can update the log
             if (cartLog.CartLogId != 0 && cartLog.EmployeeId != employeeId)

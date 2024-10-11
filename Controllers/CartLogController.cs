@@ -5,20 +5,18 @@ using Microsoft.AspNetCore.Mvc;
 using LinenManagementSystem.Models;
 using LinenManagementSystem.Repositories;
 using LinenManagementSystem.Services;
+using LinenManagementSystem.DTOs;
+using Microsoft.AspNetCore.Authorization;
 
 namespace LinenManagementSystem.Controllers
 {
 
     [ApiController]
     [Route("api/cartlogs")]
-    public class CartLogController : ControllerBase
+    [Authorize]
+    public class CartLogController(ICartLogService cartLogService) : ControllerBase
     {
-        private readonly ICartLogService _cartLogService;
-
-        public CartLogController(ICartLogService cartLogService)
-        {
-            _cartLogService = cartLogService;
-        }
+        private readonly ICartLogService _cartLogService = cartLogService;
 
         [HttpGet("{cartLogId}")]
         public async Task<IActionResult> GetCartLogById(int cartLogId)
@@ -40,7 +38,7 @@ namespace LinenManagementSystem.Controllers
         }
 
         [HttpPost("upsert")]
-        public async Task<IActionResult> UpsertCartLog([FromBody] CartLog cartLog)
+        public async Task<IActionResult> UpsertCartLog([FromBody] CartLogInsert cartLog)
         {
             var employeeId = 1; // Replace with actual employee ID from claims or session
             var updatedCartLog = await _cartLogService.UpsertCartLogAsync(cartLog, employeeId);
