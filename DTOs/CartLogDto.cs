@@ -10,9 +10,9 @@ namespace LinenManagementSystem.DTOs
         public DateTime DateWeighed { get; set; }
 
         // Complex types: Cart, Location, Employee
-        public required CartDto Cart { get; set; }
-        public required LocationDto Location { get; set; }
-        public required EmployeeDto Employee { get; set; }
+        public  CartDto? Cart { get; set; }
+        public  LocationDto? Location { get; set; }
+        public  EmployeeDtoFetch? Employee { get; set; }
 
         // Initialize the Linens collection to avoid null reference issues
         public required ICollection<LinenDtoFetch> Linen { get; set; } = [];

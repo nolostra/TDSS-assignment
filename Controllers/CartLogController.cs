@@ -10,7 +10,7 @@ namespace LinenManagementSystem.Controllers
 {
 
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/cartlogs")]
     public class CartLogController : ControllerBase
     {
         private readonly ICartLogService _cartLogService;
@@ -27,12 +27,6 @@ namespace LinenManagementSystem.Controllers
             if (cartLog == null)
             {
                 return NotFound();
-            }
-
-            // Optionally filter out linen if the cart is soiled
-            if (cartLog.Cart.Type == "Soiled")
-            {
-                cartLog.Linen = null; // or filter out as per requirements
             }
 
             return Ok(new { cartLog });

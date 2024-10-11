@@ -1,4 +1,6 @@
 // DTOs/EmployeeDto.cs
+using LinenManagementSystem.Models;
+
 namespace LinenManagementSystem.DTOs
 {
     public class EmployeeDto
@@ -7,7 +9,15 @@ namespace LinenManagementSystem.DTOs
         public required string Name { get; set; }
         public required string Email { get; set; }
         public required string Password { get; set; }
-        public required string RefreshToken { get; set; }
+        public string? RefreshToken { get; set; }
+
+    }
+
+
+    public class EmployeeDtoFetch
+    {
+        public int EmployeeId { get; set; }
+        public required string Name { get; set; }
     }
 }
 

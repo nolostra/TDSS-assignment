@@ -7,24 +7,83 @@ using LinenManagementSystem.DTOs;
 
 namespace LinenManagementSystem.Repositories
 {
-    public class CartLogRepository : ICartLogRepository
+    public interface ICartLogRepository
     {
-        private readonly ApplicationDbContext _context;
+        Task<CartLogFetch?> GetCartLogByIdAsync(int cartLogId);
+        Task<IEnumerable<CartLog>> GetCartLogsAsync(string cartType, string location, int? employeeId);
+        Task<CartLog> UpsertCartLogAsync(CartLogInsert cartLog);
+        Task<bool> DeleteCartLogAsync(int cartLogId, int employeeId);
+    }
+    public class CartLogRepository(ApplicationDbContext context) : ICartLogRepository
+    {
+        private readonly ApplicationDbContext _context = context;
 
-        public CartLogRepository(ApplicationDbContext context)
+        public async Task<CartLogFetch?> GetCartLogByIdAsync(int cartLogId)
         {
-            _context = context;
-        }
-
-        public async Task<CartLog> GetCartLogByIdAsync(int cartLogId)
-        {
-            return await _context.CartLog
-                .Include(c => c.Cart)
-                .Include(c => c.Location)
-                .Include(c => c.Employee)
-                .Include(c => c.CartLogDetails) // Adjusted to ensure CartLogDetails are included
+            // Fetch the CartLog based on the cartLogId
+            var cartLog = await _context.CartLog
                 .FirstOrDefaultAsync(cl => cl.CartLogId == cartLogId);
+
+            // If no CartLog is found, return null
+            if (cartLog == null)
+            {
+                return null;
+            }
+
+            // Fetch related entities
+            var cart = await _context.Carts
+                .FirstOrDefaultAsync(c => c.CartId == cartLog.CartId);
+
+            var location = await _context.Locations
+                .FirstOrDefaultAsync(l => l.LocationId == cartLog.LocationId);
+
+            var employee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.EmployeeId == cartLog.EmployeeId);
+
+            // Fetch CartLogDetails with associated Linens
+            var linenDetails = await (from detail in _context.CartLogDetails
+                                      join linen in _context.Linens on detail.LinenId equals linen.LinenId
+                                      where detail.CartLogId == cartLogId
+                                      select new LinenDtoFetch
+                                      {
+                                          CartLogDetailId = detail.CartLogDetailId,
+                                          LinenId = detail.LinenId,
+                                          Name = linen.Name, // Assuming Linen has a Name property
+                                          Count = detail.Count
+                                      }).ToListAsync();
+
+            // Return the combined results
+            return new CartLogFetch
+            {
+                CartLogId = cartLog.CartLogId,
+                ReceiptNumber = cartLog.ReceiptNumber,
+                DateWeighed = cartLog.DateWeighed,
+                Employee = employee != null ? new EmployeeDtoFetch
+                {
+                    EmployeeId = employee.EmployeeId,
+                    Name = employee.Name,
+
+                } : null,
+                Location = location != null ? new LocationDto
+                {
+                    LocationId = location.LocationId,
+                    Name = location.Name,
+                    Type = location.Type
+                } : null,
+                ReportedWeight = cartLog.ReportedWeight,
+                ActualWeight = cartLog.ActualWeight,
+                Comments = cartLog.Comments,
+                Cart = cart != null ? new CartDto
+                {
+                    CartId = cart.CartId,
+                    Type = cart.Type,
+                    Weight = cart.Weight,
+                    Name = cart.Name
+                } : null,
+                Linen = linenDetails
+            };
         }
+
 
         public async Task<IEnumerable<CartLog>> GetCartLogsAsync(string cartType, string location, int? employeeId)
         {
@@ -74,8 +133,16 @@ namespace LinenManagementSystem.Repositories
                     LinenId = item.LinenId,
                     Count = item.Count,
                 };
+                if (item.CartLogDetailId == 0)
+                {
+                    await _context.CartLogDetails.AddAsync(cartLogDetail);
+                }
+                else
+                {
+                    _context.CartLogDetails.Update(cartLogDetail);
+                }
 
-                await _context.CartLogDetails.AddAsync(cartLogDetail);
+
 
                 var cartLogLinen = new Linen
                 {
@@ -83,8 +150,14 @@ namespace LinenManagementSystem.Repositories
                     Name = item.Name,
                     Weight = 0,
                 };
-
-                await _context.Linens.AddAsync(cartLogLinen);
+                if (item.LinenId == 0)
+                {
+                    await _context.Linens.AddAsync(cartLogLinen);
+                }
+                else
+                {
+                    _context.Linens.Update(cartLogLinen);
+                }
 
             }
 
