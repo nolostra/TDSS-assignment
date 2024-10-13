@@ -8,6 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using BCrypt.Net;
 
 namespace LinenManagementSystem.Services
 {
@@ -32,11 +33,11 @@ namespace LinenManagementSystem.Services
         {
             // Validate credentials
             var employee = await _context.Employees
-                .FirstOrDefaultAsync(e => e.Email == loginRequest.Email && e.Password == loginRequest.Password);
+                .FirstOrDefaultAsync(e => e.Email == loginRequest.Email);
 
-            if (employee == null)
+            if (employee == null || !BCrypt.Net.BCrypt.Verify(loginRequest.Password, employee.Password))
             {
-                return null;
+                return null; // Return null if no employee found or password doesn't match
             }
 
             // Generate tokens

@@ -144,3 +144,4 @@ C:\Users\Saiesh\Desktop\TDSS\LinenManagementSystem\obj\Debug\net8.0\refint\Linen
 C:\Users\Saiesh\Desktop\TDSS\LinenManagementSystem\obj\Debug\net8.0\LinenManagementSystem.pdb
 C:\Users\Saiesh\Desktop\TDSS\LinenManagementSystem\obj\Debug\net8.0\LinenManagementSystem.genruntimeconfig.cache
 C:\Users\Saiesh\Desktop\TDSS\LinenManagementSystem\obj\Debug\net8.0\ref\LinenManagementSystem.dll
+C:\Users\Saiesh\Desktop\TDSS\LinenManagementSystem\bin\Debug\net8.0\BCrypt.Net-Next.dll
