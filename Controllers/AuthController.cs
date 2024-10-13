@@ -5,7 +5,7 @@ using LinenManagementSystem.Services;
 namespace LinenManagementSystem.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     public class AuthenticationController : ControllerBase
     {
         private readonly IAuthenticationService _authService;

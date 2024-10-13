@@ -14,9 +14,14 @@ namespace LinenManagementSystem.Repositories
         Task<CartLog> UpsertCartLogAsync(CartLogInsert cartLog);
         Task<bool> DeleteCartLogAsync(int cartLogId, int employeeId);
     }
-    public class CartLogRepository(ApplicationDbContext context) : ICartLogRepository
+    public class CartLogRepository : ICartLogRepository
     {
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
+
+        public CartLogRepository(ApplicationDbContext context) // Corrected this line
+        {
+            _context = context;
+        }
 
         public async Task<CartLogFetch?> GetCartLogByIdAsync(int cartLogId)
         {
@@ -85,13 +90,13 @@ namespace LinenManagementSystem.Repositories
         }
 
 
-        public async Task<IEnumerable<CartLogFetch?>> GetCartLogsAsync( string cartType, string location, int? employeeId)
+        public async Task<IEnumerable<CartLogFetch?>> GetCartLogsAsync(string cartType, string location, int? employeeId)
         {
             // Start the query for either fetching by ID or multiple records
             var query = _context.CartLog.AsQueryable();
 
             // If cartLogId is provided, fetch specific CartLog by ID
-        
+
 
             // Apply filtering for cartType, location, and employeeId
             if (!string.IsNullOrEmpty(cartType))

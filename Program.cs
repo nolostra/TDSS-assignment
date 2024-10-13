@@ -48,6 +48,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Register your services and repositories
+builder.Services.AddScoped<ICartLogRepository, CartLogRepository>(); // Add this line
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<ICartLogService, CartLogService>();
 
