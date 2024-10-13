@@ -10,7 +10,7 @@ namespace LinenManagementSystem.Repositories
     public interface ICartLogRepository
     {
         Task<CartLogFetch?> GetCartLogByIdAsync(int cartLogId);
-        Task<IEnumerable<CartLog>> GetCartLogsAsync(string cartType, string location, int? employeeId);
+        Task<IEnumerable<CartLogFetch?>> GetCartLogsAsync(string cartType, string location, int? employeeId);
         Task<CartLog> UpsertCartLogAsync(CartLogInsert cartLog);
         Task<bool> DeleteCartLogAsync(int cartLogId, int employeeId);
     }
@@ -85,20 +85,23 @@ namespace LinenManagementSystem.Repositories
         }
 
 
-        public async Task<IEnumerable<CartLog>> GetCartLogsAsync(string cartType, string location, int? employeeId)
+        public async Task<IEnumerable<CartLogFetch?>> GetCartLogsAsync( string cartType, string location, int? employeeId)
         {
+            // Start the query for either fetching by ID or multiple records
             var query = _context.CartLog.AsQueryable();
 
+            // If cartLogId is provided, fetch specific CartLog by ID
+        
+
+            // Apply filtering for cartType, location, and employeeId
             if (!string.IsNullOrEmpty(cartType))
             {
-                query = query.Include(cl => cl.Cart) // Ensure Cart is included for filtering
-                             .Where(cl => cl.Cart.Type == cartType);
+                query = query.Where(cl => cl.Cart.Type == cartType);
             }
 
             if (!string.IsNullOrEmpty(location))
             {
-                query = query.Include(cl => cl.Location) // Ensure Location is included for filtering
-                             .Where(cl => cl.Location.Name == location);
+                query = query.Where(cl => cl.Location.Name == location);
             }
 
             if (employeeId.HasValue)
@@ -106,8 +109,54 @@ namespace LinenManagementSystem.Repositories
                 query = query.Where(cl => cl.EmployeeId == employeeId.Value);
             }
 
-            return await query.OrderByDescending(cl => cl.DateWeighed).ToListAsync();
+            // Fetch CartLogs and project them into CartLogFetch DTOs
+            var cartLogs = await query
+                .OrderByDescending(cl => cl.DateWeighed)
+                .Select(cl => new CartLogFetch
+                {
+                    CartLogId = cl.CartLogId,
+                    ReceiptNumber = cl.ReceiptNumber,
+                    DateWeighed = cl.DateWeighed,
+                    Employee = cl.Employee != null ? new EmployeeDtoFetch
+                    {
+                        EmployeeId = cl.Employee.EmployeeId,
+                        Name = cl.Employee.Name,
+                    } : null,
+                    Location = cl.Location != null ? new LocationDto
+                    {
+                        LocationId = cl.Location.LocationId,
+                        Name = cl.Location.Name,
+                        Type = cl.Location.Type
+                    } : null,
+                    ReportedWeight = cl.ReportedWeight,
+                    ActualWeight = cl.ActualWeight,
+                    Comments = cl.Comments,
+                    Cart = cl.Cart != null ? new CartDto
+                    {
+                        CartId = cl.Cart.CartId,
+                        Type = cl.Cart.Type,
+                        Weight = cl.Cart.Weight,
+                        Name = cl.Cart.Name
+                    } : null,
+                    Linen = _context.CartLogDetails
+                        .Where(d => d.CartLogId == cl.CartLogId)
+                        .Join(_context.Linens,
+                            detail => detail.LinenId,
+                            linen => linen.LinenId,
+                            (detail, linen) => new LinenDtoFetch
+                            {
+                                CartLogDetailId = detail.CartLogDetailId,
+                                LinenId = linen.LinenId,
+                                Name = linen.Name, // Assuming Linen has a Name property
+                                Count = detail.Count
+                            })
+                        .ToList() // Convert inner query results to List
+                })
+                .ToListAsync();
+
+            return cartLogs;
         }
+
 
         public async Task<CartLog> UpsertCartLogAsync(CartLogInsert cartLogDto)
         {
