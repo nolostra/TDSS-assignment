@@ -89,7 +89,7 @@ namespace LinenManagementSystem.Services
             // Update refresh token in the database
             employee.RefreshToken = newRefreshToken;
             await _context.SaveChangesAsync();
-
+            Console.WriteLine($"Generated Token: {newAccessToken}");
             return new AuthResponseDto
             {
                 AccessToken = newAccessToken,
@@ -101,22 +101,25 @@ namespace LinenManagementSystem.Services
         private string GenerateJwtToken(Employees employee)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:SecretKey"]); // Define in appsettings.json
+            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:SecretKey"]);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(ClaimTypes.NameIdentifier, employee.EmployeeId.ToString()),
-                    new Claim(ClaimTypes.Email, employee.Email),
-                }),
+                Subject = new ClaimsIdentity([
+            new Claim(ClaimTypes.NameIdentifier, employee.EmployeeId.ToString()),
+            new Claim(ClaimTypes.Email, employee.Email),
+            // Add any other claims you might need
+        ]),
                 Expires = DateTime.UtcNow.AddMinutes(15), // Access token expiration
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
+            Console.WriteLine($"Generated Token: {token}");
             return tokenHandler.WriteToken(token);
         }
+
+
 
         // Helper method to generate a refresh token
         private static string GenerateRefreshToken()

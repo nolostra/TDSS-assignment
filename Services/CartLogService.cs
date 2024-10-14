@@ -9,7 +9,7 @@ namespace LinenManagementSystem.Services
     public interface ICartLogService
     {
         Task<CartLogFetch?> GetCartLogByIdAsync(int cartLogId);
-        Task<IEnumerable<CartLogFetch?>> GetCartLogsAsync(string cartType, string location, int? employeeId);
+        Task<IEnumerable<CartLogFetch?>> GetCartLogsAsync(string? cartType, string? location, int? employeeId);
         Task<CartLog> UpsertCartLogAsync(CartLogInsert cartLog, int employeeId);
         Task<bool> DeleteCartLogAsync(int cartLogId, int employeeId);
     }
@@ -25,7 +25,7 @@ namespace LinenManagementSystem.Services
             return _cartLogRepository.GetCartLogByIdAsync(cartLogId);
         }
 
-        public Task<IEnumerable<CartLogFetch?>> GetCartLogsAsync(string cartType, string location, int? employeeId)
+        public Task<IEnumerable<CartLogFetch?>> GetCartLogsAsync(string? cartType, string? location, int? employeeId)
         {
             return _cartLogRepository.GetCartLogsAsync(cartType, location, employeeId);
         }

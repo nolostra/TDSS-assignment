@@ -10,7 +10,7 @@ namespace LinenManagementSystem.Repositories
     public interface ICartLogRepository
     {
         Task<CartLogFetch?> GetCartLogByIdAsync(int cartLogId);
-        Task<IEnumerable<CartLogFetch?>> GetCartLogsAsync(string cartType, string location, int? employeeId);
+        Task<IEnumerable<CartLogFetch?>> GetCartLogsAsync(string? cartType, string? location, int? employeeId);
         Task<CartLog> UpsertCartLogAsync(CartLogInsert cartLog);
         Task<bool> DeleteCartLogAsync(int cartLogId, int employeeId);
     }
@@ -90,7 +90,7 @@ namespace LinenManagementSystem.Repositories
         }
 
 
-        public async Task<IEnumerable<CartLogFetch?>> GetCartLogsAsync(string cartType, string location, int? employeeId)
+        public async Task<IEnumerable<CartLogFetch?>> GetCartLogsAsync(string? cartType, string? location, int? employeeId)
         {
             // Start the query for either fetching by ID or multiple records
             var query = _context.CartLog.AsQueryable();

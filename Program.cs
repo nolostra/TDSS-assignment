@@ -5,15 +5,18 @@ using LinenManagementSystem.Data;
 using LinenManagementSystem.Services;
 using LinenManagementSystem.Repositories;
 using System.Text;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Logging setup
-builder.Logging.ClearProviders(); 
-builder.Logging.AddConsole(); 
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole(); // Add console logging
 
 // Add services to the container
 builder.Services.AddEndpointsApiExplorer();
+
+// Swagger configuration
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Linen Management System API", Version = "v1" });
@@ -48,7 +51,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Register your services and repositories
-builder.Services.AddScoped<ICartLogRepository, CartLogRepository>(); // Add this line
+builder.Services.AddScoped<ICartLogRepository, CartLogRepository>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<ICartLogService, CartLogService>();
 
@@ -62,13 +65,38 @@ builder.Services.AddAuthentication(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = false, // Set to true if you have a specific issuer
-        ValidateAudience = false, // Set to true if you have a specific audience
+        ValidateIssuer = false, // Set to true if you specify an issuer
+        ValidateAudience = false, // Set to true if you specify an audience
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"])),
         ClockSkew = TimeSpan.Zero // Ensure token expiration is exact
     };
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            if (context.Response.HasStarted)
+            {
+                return Task.CompletedTask; // Response already started, do not modify
+            }
+
+            context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+            context.Response.ContentType = "application/json";
+            return context.Response.WriteAsync("{\"message\":\"Authentication failed: " + context.Exception.Message + "\"}");
+        }
+    };
+
+});
+
+
+// Configure Kestrel for HTTPS
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(7199, listenOptions =>
+    {
+        listenOptions.UseHttps(); // Ensure HTTPS is enabled
+    });
 });
 
 // Add controller services
@@ -79,9 +107,18 @@ var app = builder.Build();
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Linen Management System API v1"));
 }
+
+// Optional: Uncomment if using custom middleware for header validation
+// app.UseMiddleware<TokenValidationMiddleware>(); 
+
+app.UseCors(builder => builder
+    .AllowAnyOrigin()
+    .AllowAnyMethod()
+    .AllowAnyHeader());
 
 app.UseHttpsRedirection();
 

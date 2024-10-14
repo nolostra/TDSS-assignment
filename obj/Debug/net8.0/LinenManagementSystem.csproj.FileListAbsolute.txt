@@ -11,7 +11,6 @@ C:\Users\Saiesh\Desktop\TDSS\LinenManagementSystem\bin\Debug\net8.0\Humanizer.dl
 C:\Users\Saiesh\Desktop\TDSS\LinenManagementSystem\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
 C:\Users\Saiesh\Desktop\TDSS\LinenManagementSystem\bin\Debug\net8.0\Microsoft.AspNetCore.OpenApi.dll
 C:\Users\Saiesh\Desktop\TDSS\LinenManagementSystem\bin\Debug\net8.0\Microsoft.Bcl.AsyncInterfaces.dll
-C:\Users\Saiesh\Desktop\TDSS\LinenManagementSystem\bin\Debug\net8.0\Microsoft.Bcl.TimeProvider.dll
 C:\Users\Saiesh\Desktop\TDSS\LinenManagementSystem\bin\Debug\net8.0\Microsoft.CodeAnalysis.dll
 C:\Users\Saiesh\Desktop\TDSS\LinenManagementSystem\bin\Debug\net8.0\Microsoft.CodeAnalysis.CSharp.dll
 C:\Users\Saiesh\Desktop\TDSS\LinenManagementSystem\bin\Debug\net8.0\Microsoft.CodeAnalysis.CSharp.Workspaces.dll
