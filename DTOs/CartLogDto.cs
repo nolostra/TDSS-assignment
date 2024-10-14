@@ -3,10 +3,10 @@ namespace LinenManagementSystem.DTOs
     public class CartLogFetch
     {
         public int CartLogId { get; set; }
-        public required string ReceiptNumber { get; set; }
-        public double ReportedWeight { get; set; }
-        public double ActualWeight { get; set; }
-        public required string Comments { get; set; }
+        public  string? ReceiptNumber { get; set; }
+        public int ReportedWeight { get; set; }
+        public int ActualWeight { get; set; }
+        public  string? Comments { get; set; }
         public DateTime DateWeighed { get; set; }
 
         // Complex types: Cart, Location, Employee
@@ -21,10 +21,10 @@ namespace LinenManagementSystem.DTOs
      public class CartLogInsert
     {
         public int CartLogId { get; set; }
-        public required string ReceiptNumber { get; set; }
-        public double ReportedWeight { get; set; }
-        public double ActualWeight { get; set; }
-        public required string Comments { get; set; }
+        public  string? ReceiptNumber { get; set; }
+        public int ReportedWeight { get; set; }
+        public int ActualWeight { get; set; }
+        public  string? Comments { get; set; }
         public DateTime DateWeighed { get; set; }
 
         // Complex types: Cart, Location, Employee
