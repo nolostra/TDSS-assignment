@@ -6,6 +6,6 @@ namespace LinenManagementSystem.Models
         [Key]
         public required int LinenId { get; set; }
         public required string Name { get; set; }
-        public required double Weight { get; set; }
+        public required decimal Weight { get; set; }
     }
 }
