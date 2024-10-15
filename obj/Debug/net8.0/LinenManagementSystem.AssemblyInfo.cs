@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LinenManagementSystem")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c12eec7ebd922ad915f9e00b6c1e886e3b6b770b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+05a28780feaef88e753ff184134a589db9004cf6")]
 [assembly: System.Reflection.AssemblyProductAttribute("LinenManagementSystem")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LinenManagementSystem")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

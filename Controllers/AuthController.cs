@@ -23,7 +23,7 @@ namespace LinenManagementSystem.Controllers
 
             if (result == null)
             {
-                return Unauthorized("Invalid credentials");
+                return Unauthorized(new {  message = "Invalid username or password" });
             }
 
             return Ok(result);
@@ -37,7 +37,7 @@ namespace LinenManagementSystem.Controllers
 
             if (!success)
             {
-                return BadRequest("Invalid refresh token");
+                return BadRequest(new {  message = "Logout failed" });
             }
 
             return Ok(new {  message = "Logout successful" });
@@ -51,7 +51,7 @@ namespace LinenManagementSystem.Controllers
 
             if (result == null)
             {
-                return Unauthorized("Invalid refresh token");
+                return Unauthorized(new {  message = "Invalid refresh token" });
             }
 
             return Ok(result);

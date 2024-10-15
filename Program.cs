@@ -101,6 +101,7 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 
 // Add controller services
 builder.Services.AddControllers();
+builder.Services.AddAuthorization(); 
 
 var app = builder.Build();
 
@@ -115,7 +116,7 @@ if (app.Environment.IsDevelopment())
 // Optional: Uncomment if using custom middleware for header validation
 // app.UseMiddleware<TokenValidationMiddleware>(); 
 
-app.UseMiddleware<GlobalErrorHandlerMiddleware>();
+
 
 app.UseCors(builder => builder
     .AllowAnyOrigin()
@@ -125,9 +126,12 @@ app.UseCors(builder => builder
 app.UseHttpsRedirection();
 
 // Use authentication and authorization middleware
+app.UseRouting();
+app.UseMiddleware<TokenValidationMiddleware>(); 
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseRouting();
+app.UseMiddleware<GlobalErrorHandlerMiddleware>();
+
 app.MapControllers(); // Map attribute routes
 
 app.Run();
