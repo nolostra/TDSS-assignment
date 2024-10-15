@@ -25,151 +25,103 @@ namespace LinenManagementSystem.Repositories
 
         public async Task<CartLogFetch?> GetCartLogByIdAsync(int cartLogId)
         {
-            // Fetch the CartLog based on the cartLogId
             var cartLog = await _context.CartLog
-                .FirstOrDefaultAsync(cl => cl.CartLogId == cartLogId);
-
-            // If no CartLog is found, return null
-            if (cartLog == null)
-            {
-                return null;
-            }
-
-            // Fetch related entities
-            var cart = await _context.Carts
-                .FirstOrDefaultAsync(c => c.CartId == cartLog.CartId);
-
-            var location = await _context.Locations
-                .FirstOrDefaultAsync(l => l.LocationId == cartLog.LocationId);
-
-            var employee = await _context.Employees
-                .FirstOrDefaultAsync(e => e.EmployeeId == cartLog.EmployeeId);
-
-            // Fetch CartLogDetails with associated Linens
-            var linenDetails = await (from detail in _context.CartLogDetail
-                                      join linen in _context.Linen on detail.LinenId equals linen.LinenId
-                                      where detail.CartLogId == cartLogId
-                                      select new LinenDtoFetch
-                                      {
-                                          CartLogDetailId = detail.CartLogDetailId,
-                                          LinenId = detail.LinenId,
-                                          Name = linen.Name, // Assuming Linen has a Name property
-                                          Count = detail.Count
-                                      }).DefaultIfEmpty().ToListAsync();
-
-            // Return the combined results
-            return new CartLogFetch
-            {
-                CartLogId = cartLog.CartLogId,
-                ReceiptNumber = cartLog.ReceiptNumber,
-                DateWeighed = cartLog.DateWeighed,
-                Employee = employee != null ? new EmployeeDtoFetch
+                .Where(cl => cl.CartLogId == cartLogId) // Filter by cartLogId
+                .Select(cl => new CartLogFetch
                 {
-                    EmployeeId = employee.EmployeeId,
-                    Name = employee.Name,
+                    CartLogId = cl.CartLogId,
+                    ReceiptNumber = cl.ReceiptNumber,
+                    DateWeighed = cl.DateWeighed,
+                    Employee = _context.Employees
+                        .Where(e => e.EmployeeId == cl.EmployeeId)
+                        .Select(e => new EmployeeDtoFetch
+                        {
+                            EmployeeId = e.EmployeeId,
+                            Name = e.Name ?? "Unknown" // Handle potential null case
+                        })
+                        .FirstOrDefault(),
+                    Location = _context.Locations
+                        .Where(e => e.LocationId == cl.LocationId)
+                        .Select(e => new LocationDto
+                        {
+                            LocationId = e.LocationId,
+                            Name = e.Name ?? "Unknown", // Handle null case
+                            Type = e.Type ?? "Unknown"  // Handle null case
+                        })
+                        .FirstOrDefault(),
+                    ReportedWeight = cl.ReportedWeight ?? 0,
+                    ActualWeight = cl.ActualWeight,
+                    Comments = cl.Comments ?? "No comments", // Default comment if null
+                    Cart = _context.Carts
+                        .Where(e => e.CartId == cl.CartId)
+                        .Select(e => new CartDto
+                        {
+                            CartId = e.CartId,
+                            Type = e.Type ?? "Unknown", // Handle null case
+                            Weight = e.Weight,
+                            Name = e.Name ?? "Unknown" // Handle null case
+                        })
+                        .FirstOrDefault(),
+                    Linen = _context.CartLogDetail
+                        .Where(d => d.CartLogId == cl.CartLogId)
+                        .Join(_context.Linen,
+                            detail => detail.LinenId,
+                            linen => linen.LinenId,
+                            (detail, linen) => new LinenDtoFetch
+                            {
+                                CartLogDetailId = detail.CartLogDetailId,
+                                LinenId = linen.LinenId,
+                                Name = linen.Name ?? "Unknown", // Handle null case
+                                Count = detail.Count
+                            })
+                        .ToList() // Convert inner query results to List
+                })
+                .FirstOrDefaultAsync(); // Get the first matching CartLog
 
-                } : null,
-                Location = location != null ? new LocationDto
-                {
-                    LocationId = location.LocationId,
-                    Name = location.Name,
-                    Type = location.Type
-                } : null,
-                ReportedWeight = cartLog.ReportedWeight ?? 0,
-                ActualWeight = cartLog.ActualWeight,
-                Comments = cartLog.Comments,
-                Cart = cart != null ? new CartDto
-                {
-                    CartId = cart.CartId,
-                    Type = cart.Type,
-                    Weight = cart.Weight,
-                    Name = cart.Name
-                } : null,
-                Linen = linenDetails
-            };
+            return cartLog;
         }
+
 
 
         public async Task<IEnumerable<CartLogFetch?>> GetCartLogsAsync(string? cartType, string? location, int? employeeId)
         {
             var query = _context.CartLog.AsQueryable();
 
-            // Apply filtering for cartType, location, and employeeId
-            // if (!string.IsNullOrEmpty(cartType))
-            // {
-            //     query = query.Where(cl => cl.Cart.Type == cartType);
-            // }
-
-            // if (!string.IsNullOrEmpty(location))
-            // {
-            //     query = query.Where(cl => cl.Location.Name == location);
-            // }
-
-            // if (employeeId.HasValue)
-            // {
-            //     query = query.Where(cl => cl.EmployeeId == employeeId.Value);
-            // }
-            try
-            {
-                var dummyData = await query.ToListAsync();
-
-                // Check if dummyData is not null or empty
-                if (dummyData != null && dummyData.Any())
-                {
-                    // Iterate through each item in the list and print its properties
-                    foreach (var cartLog in dummyData)
-                    {
-                        Console.WriteLine($"CartLogId: {cartLog.CartLogId}, " +
-                                          $"ReceiptNumber: {cartLog.ReceiptNumber}, " +
-                                          $"DateWeighed: {cartLog.DateWeighed}, " +
-                                          $"ReportedWeight: {cartLog.ReportedWeight}, " +
-                                          $"ActualWeight: {cartLog.ActualWeight}, " +
-                                          $"Comments: {cartLog.Comments ?? "No comments"}");
-
-
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("No cart logs found.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
 
 
 
             // Fetch CartLogs and project them into CartLogFetch DTOs
             var cartLogs = await query
-     .OrderByDescending(cl => cl.DateWeighed)
-     .Select(cl => new CartLogFetch
-     {
-         CartLogId = cl.CartLogId,
-         ReceiptNumber = cl.ReceiptNumber,
-         DateWeighed = cl.DateWeighed,
-         Employee = _context.Employees
-            .Where(e => e.EmployeeId == cl.EmployeeId)
+    .OrderByDescending(cl => cl.DateWeighed)
+    .Where(cl => _context.Employees.Any(e => e.EmployeeId == cl.EmployeeId && (employeeId == null || e.EmployeeId == employeeId))) // Filter out logs without valid Employee
+    .Where(cl => _context.Locations.Any(l => l.LocationId == cl.LocationId && (location == null || l.Name == location))) // Filter out logs without valid Location
+    .Where(cl => _context.Carts.Any(c => c.CartId == cl.CartId && (cartType == null || c.Type == cartType))) // Filter out logs without valid Cart
+    .Select(cl => new CartLogFetch
+    {
+        CartLogId = cl.CartLogId,
+        ReceiptNumber = cl.ReceiptNumber,
+        DateWeighed = cl.DateWeighed,
+        Employee = _context.Employees
+            .Where(e => e.EmployeeId == cl.EmployeeId && (employeeId == null || e.EmployeeId == employeeId))
             .Select(e => new EmployeeDtoFetch
             {
                 EmployeeId = e.EmployeeId,
                 Name = e.Name ?? "Unknown" // Handle potential null case
             })
             .FirstOrDefault(),
-         Location = _context.Locations
-            .Where(e => e.LocationId == cl.LocationId)
+        Location = _context.Locations
+            .Where(e => e.LocationId == cl.LocationId && (location == null || e.Name == location))
            .Select(e => new LocationDto
            {
                LocationId = e.LocationId,
                Name = e.Name, // Handle null case
                Type = e.Type // Handle null case
            }).FirstOrDefault(),
-         ReportedWeight = cl.ReportedWeight ?? 0,
-         ActualWeight = cl.ActualWeight,
-         Comments = cl.Comments ?? "No comments", // Fixed quote
-         Cart = _context.Carts
-            .Where(e => e.CartId == cl.CartId)
+        ReportedWeight = cl.ReportedWeight ?? 0,
+        ActualWeight = cl.ActualWeight,
+        Comments = cl.Comments ?? "No comments", // Fixed quote
+        Cart = _context.Carts
+            .Where(e => e.CartId == cl.CartId && (cartType == null || e.Type == cartType))
            .Select(e => new CartDto
            {
                CartId = e.CartId,
@@ -177,7 +129,7 @@ namespace LinenManagementSystem.Repositories
                Weight = e.Weight,
                Name = e.Name ?? "Unknown"
            }).FirstOrDefault(),
-         Linen = _context.CartLogDetail
+        Linen = _context.CartLogDetail
              .Where(d => d.CartLogId == cl.CartLogId)
              .Join(_context.Linen,
                  detail => detail.LinenId,
@@ -190,8 +142,8 @@ namespace LinenManagementSystem.Repositories
                      Count = detail.Count
                  })
              .ToList() // Convert inner query results to List
-     })
-     .ToListAsync();
+    })
+    .ToListAsync();
 
 
             return cartLogs;
