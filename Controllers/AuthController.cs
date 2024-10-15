@@ -40,7 +40,7 @@ namespace LinenManagementSystem.Controllers
                 return BadRequest("Invalid refresh token");
             }
 
-            return Ok("Logged out successfully");
+            return Ok(new {  message = "Logout successful" });
         }
 
         // POST: api/auth/refresh

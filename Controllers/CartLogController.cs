@@ -41,6 +41,7 @@ namespace LinenManagementSystem.Controllers
             return Ok(new { cartLog , message = "Cart log has been successfully fetched." });
         }
 
+
         [HttpGet]
         public async Task<IActionResult> GetCartLogs([FromQuery] string? cartType, [FromQuery] string? location, [FromQuery] int? employeeId)
         {

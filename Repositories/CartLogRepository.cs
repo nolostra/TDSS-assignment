@@ -157,108 +157,127 @@ namespace LinenManagementSystem.Repositories
         {
             try
             {
-                var cartLog = new CartLog
-                {
-                    CartLogId = cartLogDto.CartLogId,
-                    ReceiptNumber = cartLogDto.ReceiptNumber,
-                    ReportedWeight = cartLogDto.ReportedWeight,
-                    ActualWeight = cartLogDto.ActualWeight,
-                    Comments = cartLogDto.Comments,
-                    DateWeighed = cartLogDto.DateWeighed,
-                    CartId = cartLogDto.CartId,
-                    LocationId = cartLogDto.LocationId,
-                    EmployeeId = cartLogDto.EmployeeId,
-                };
+                CartLog cartLog;
 
                 if (cartLogDto.CartLogId == 0) // If new CartLog
                 {
+                    // Create a new CartLog entity
+                    cartLog = new CartLog
+                    {
+                        ReceiptNumber = cartLogDto.ReceiptNumber,
+                        ReportedWeight = cartLogDto.ReportedWeight,
+                        ActualWeight = cartLogDto.ActualWeight,
+                        Comments = cartLogDto.Comments,
+                        DateWeighed = cartLogDto.DateWeighed,
+                        CartId = cartLogDto.CartId,
+                        LocationId = cartLogDto.LocationId,
+                        EmployeeId = cartLogDto.EmployeeId,
+                    };
 
                     await _context.CartLog.AddAsync(cartLog);
                     await _context.SaveChangesAsync(); // Save to generate CartLogId
+
+                    cartLogDto.CartLogId = cartLog.CartLogId; // Update DTO with generated ID
                 }
                 else
                 {
                     // Check if the CartLog exists
-                    var existingCartLog = await _context.CartLog
-    .FirstOrDefaultAsync(cl => cl.CartLogId == cartLogDto.CartLogId);
+                    cartLog = await _context.CartLog
+                        .FirstOrDefaultAsync(cl => cl.CartLogId == cartLogDto.CartLogId);
 
-                    if (existingCartLog == null)
+                    if (cartLog == null)
                     {
                         throw new InvalidOperationException($"CartLog with ID {cartLogDto.CartLogId} does not exist.");
                     }
 
                     // Update properties of the existing CartLog
-                    existingCartLog.ReceiptNumber = cartLogDto.ReceiptNumber;
-                    existingCartLog.ReportedWeight = cartLogDto.ReportedWeight;
-                    existingCartLog.ActualWeight = cartLogDto.ActualWeight;
-                    existingCartLog.Comments = cartLogDto.Comments;
-                    existingCartLog.DateWeighed = cartLogDto.DateWeighed;
-                    existingCartLog.CartId = cartLogDto.CartId;
-                    existingCartLog.LocationId = cartLogDto.LocationId;
-                    existingCartLog.EmployeeId = cartLogDto.EmployeeId;
+                    cartLog.ReceiptNumber = cartLogDto.ReceiptNumber;
+                    cartLog.ReportedWeight = cartLogDto.ReportedWeight;
+                    cartLog.ActualWeight = cartLogDto.ActualWeight;
+                    cartLog.Comments = cartLogDto.Comments;
+                    cartLog.DateWeighed = cartLogDto.DateWeighed;
+                    cartLog.CartId = cartLogDto.CartId;
+                    cartLog.LocationId = cartLogDto.LocationId;
+                    cartLog.EmployeeId = cartLogDto.EmployeeId;
 
                     // Mark the entity as modified
-                    _context.CartLog.Update(existingCartLog);
+                    _context.CartLog.Update(cartLog);
                 }
 
+                // Process CartLogDetails and Linen updates
                 foreach (var item in cartLogDto.Linen)
                 {
-                    // Check if CartLogDetail exists
-                    var existingCartLogDetail = await _context.CartLogDetail
-                        .FirstOrDefaultAsync(cld => cld.CartLogDetailId == item.CartLogDetailId);
-
-                    if (existingCartLogDetail == null) // If CartLogDetail doesn't exist, add it
-                    {
-                        var cartLogDetail = new CartLogDetail
-                        {
-                            CartLogId = cartLogDto.CartLogId, // Use the existing CartLogId
-                            LinenId = item.LinenId,
-                            Count = item.Count,
-                        };
-                        await _context.CartLogDetail.AddAsync(cartLogDetail);
-                    }
-                    else // If CartLogDetail exists, update it
-                    {
-                        existingCartLogDetail.CartLogId = cartLogDto.CartLogId; // Ensure it's set correctly
-                        existingCartLogDetail.LinenId = item.LinenId;
-                        existingCartLogDetail.Count = item.Count;
-
-                        _context.CartLogDetail.Update(existingCartLogDetail);
-                    }
-
-                    // Check if Linen exists
-                    var existingLinen = await _context.Linen
-                        .FirstOrDefaultAsync(l => l.LinenId == item.LinenId);
-
-                    if (existingLinen == null) // If Linen doesn't exist, add it
+                    // If LinenId is 0, it's a new Linen entity
+                    if (item.LinenId == 0)
                     {
                         var cartLogLinen = new Linen
                         {
-                            LinenId = item.LinenId,
                             Name = item.Name,
                             Weight = 0.00M, // You can set the actual weight if available
                         };
                         await _context.Linen.AddAsync(cartLogLinen);
-                    }
-                    else // If Linen exists, update it
-                    {
-                        existingLinen.Name = item.Name;
-                        existingLinen.Weight = existingLinen.Weight; // Assuming weight isn't changing here
+                        await _context.SaveChangesAsync();
 
-                        _context.Linen.Update(existingLinen);
+                        // Update LinenId in the DTO after saving (in case it's needed elsewhere)
+                        item.LinenId = cartLogLinen.LinenId;
+                    }
+                    else
+                    {
+                        // Check if Linen exists
+                        var existingLinen = await _context.Linen.FirstOrDefaultAsync(l => l.LinenId == item.LinenId);
+
+                        if (existingLinen != null) // If Linen exists, update it
+                        {
+                            existingLinen.Name = item.Name;
+                            // Update the weight if needed, or leave this line out if no changes
+                            // existingLinen.Weight = newWeight;
+
+                            _context.Linen.Update(existingLinen);
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+
+                    // If CartLogDetailId is 0, it's a new CartLogDetail entity
+                    if (item.CartLogDetailId == 0)
+                    {
+                        var cartLogDetail = new CartLogDetail
+                        {
+                            CartLogId = cartLog.CartLogId, // Use the CartLogId from the saved CartLog
+                            LinenId = item.LinenId, // Use the LinenId (whether newly inserted or existing)
+                            Count = item.Count,
+                        };
+                        await _context.CartLogDetail.AddAsync(cartLogDetail);
+                        await _context.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        // Check if CartLogDetail exists
+                        var existingCartLogDetail = await _context.CartLogDetail
+                            .FirstOrDefaultAsync(cld => cld.CartLogDetailId == item.CartLogDetailId);
+
+                        if (existingCartLogDetail != null) // If CartLogDetail exists, update it
+                        {
+                            existingCartLogDetail.LinenId = item.LinenId;
+                            existingCartLogDetail.Count = item.Count;
+
+                            _context.CartLogDetail.Update(existingCartLogDetail);
+                            await _context.SaveChangesAsync();
+                        }
                     }
                 }
+
 
                 await _context.SaveChangesAsync();
                 return cartLog;
             }
             catch (Exception ex)
             {
-                // Log the error
-                Console.Error.WriteLine($"Error occurred while upserting CartLog: {ex.Message}");
+                // Log the error with stack trace for better debugging
+                Console.Error.WriteLine($"Error occurred while upserting CartLog: {ex.Message}\n{ex.StackTrace}");
                 throw; // Rethrow the exception to propagate
             }
         }
+
 
 
 
@@ -278,7 +297,14 @@ namespace LinenManagementSystem.Repositories
 
                 if (cartLogDetails.Count != 0)
                 {
-                    // Remove CartLogDetails first (since they reference Linen
+                    // Remove CartLogDetails first (since they reference Linen)
+                    foreach (var detail in cartLogDetails)
+                    {
+                        _context.CartLogDetail.Remove(detail);
+                        await _context.SaveChangesAsync(); // Save after removing each detail
+                    }
+
+                    // Now remove the associated Linen entities after CartLogDetails are deleted
                     var linenIds = cartLogDetails.Select(cld => cld.LinenId).Distinct().ToList();
                     var linens = await _context.Linen
                         .Where(l => linenIds.Contains(l.LinenId))
@@ -287,16 +313,8 @@ namespace LinenManagementSystem.Repositories
                     foreach (var linen in linens)
                     {
                         _context.Linen.Remove(linen);
-                        await _context.SaveChangesAsync();
+                        await _context.SaveChangesAsync(); // Save after removing each linen
                     }
-                    foreach (var detail in cartLogDetails)
-                    {
-                        _context.CartLogDetail.Remove(detail);
-                        await _context.SaveChangesAsync();
-                    }
-
-                    // Now remove the associated Linen entities after CartLogDetails are deleted
-                    
                 }
 
                 // Finally, remove the CartLog
@@ -310,6 +328,7 @@ namespace LinenManagementSystem.Repositories
 
             return false; // Return false if deletion is not successful
         }
+
 
 
     }
