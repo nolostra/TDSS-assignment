@@ -265,14 +265,52 @@ namespace LinenManagementSystem.Repositories
 
         public async Task<bool> DeleteCartLogAsync(int cartLogId, int employeeId)
         {
+            // Find the CartLog by ID
             var cartLog = await _context.CartLog.FindAsync(cartLogId);
+
+            // Check if the cartLog exists and belongs to the specified employee
             if (cartLog != null && cartLog.EmployeeId == employeeId)
             {
+                // Get all associated CartLogDetails for the cartLogId
+                var cartLogDetails = await _context.CartLogDetail
+                    .Where(cld => cld.CartLogId == cartLogId)
+                    .ToListAsync();
+
+                if (cartLogDetails.Count != 0)
+                {
+                    // Remove CartLogDetails first (since they reference Linen
+                    var linenIds = cartLogDetails.Select(cld => cld.LinenId).Distinct().ToList();
+                    var linens = await _context.Linen
+                        .Where(l => linenIds.Contains(l.LinenId))
+                        .ToListAsync();
+
+                    foreach (var linen in linens)
+                    {
+                        _context.Linen.Remove(linen);
+                        await _context.SaveChangesAsync();
+                    }
+                    foreach (var detail in cartLogDetails)
+                    {
+                        _context.CartLogDetail.Remove(detail);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    // Now remove the associated Linen entities after CartLogDetails are deleted
+                    
+                }
+
+                // Finally, remove the CartLog
                 _context.CartLog.Remove(cartLog);
+
+                // Save all changes in a single call
                 await _context.SaveChangesAsync();
-                return true;
+
+                return true; // Return true indicating successful deletion
             }
+
             return false; // Return false if deletion is not successful
         }
+
+
     }
 }

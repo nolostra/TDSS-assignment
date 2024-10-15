@@ -38,15 +38,15 @@ namespace LinenManagementSystem.Controllers
                 return NotFound(new { message = $"Cart log with ID {cartLogId} not found." });
             }
             _logger.LogInformation($"Cart log with ID {cartLogId} retrieved successfully.");
-            return Ok(new { cartLog });
+            return Ok(new { cartLog , message = "Cart log has been successfully fetched." });
         }
 
         [HttpGet]
         public async Task<IActionResult> GetCartLogs([FromQuery] string? cartType, [FromQuery] string? location, [FromQuery] int? employeeId)
         {
             var cartLogs = await _cartLogService.GetCartLogsAsync(cartType, location, employeeId);
-             _logger.LogInformation($"Fetched -  {cartLogs}");
-            return Ok(new { cartLogs });
+            _logger.LogInformation($"Fetched -  {cartLogs}");
+            return Ok(new { cartLogs , message = "Cart logs have been successfully fetched." });
         }
 
         [HttpPost("upsert")]
@@ -55,11 +55,13 @@ namespace LinenManagementSystem.Controllers
             var employeeIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
             if (employeeIdClaim == null || !int.TryParse(employeeIdClaim.Value, out var employeeId))
             {
+                _logger.LogWarning("Invalid employee ID in token");
                 return Unauthorized(new { message = "Invalid employee ID in token" });
             }
 
             var updatedCartLog = await _cartLogService.UpsertCartLogAsync(cartLog, employeeId);
-            return Ok(new { cartLogs = updatedCartLog });
+            _logger.LogInformation($"Cart log has been successfully upserted.");
+            return Ok(new { cartLogs = updatedCartLog , message = "Cart log has been successfully upserted." });
         }
 
         [HttpDelete("{cartLogId}")]
@@ -68,16 +70,21 @@ namespace LinenManagementSystem.Controllers
             var employeeIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
             if (employeeIdClaim == null || !int.TryParse(employeeIdClaim.Value, out var employeeId))
             {
+                _logger.LogWarning("Invalid employee ID in token");
                 return Unauthorized(new { message = "Invalid employee ID in token" });
             }
 
             var deleted = await _cartLogService.DeleteCartLogAsync(cartLogId, employeeId);
             if (!deleted)
             {
+                _logger.LogWarning($"Cart log with ID {cartLogId} not found.");
                 return NotFound(new { message = $"Cart log with ID {cartLogId} not found." });
             }
 
-            return NoContent();
+            // Return a message on successful deletion
+            _logger.LogInformation($"Cart log with ID {cartLogId} has been successfully deleted.");
+            return Ok(new { message = $"Cart log with ID {cartLogId} has been successfully deleted." });
         }
+
     }
 }
