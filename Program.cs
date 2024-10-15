@@ -115,6 +115,8 @@ if (app.Environment.IsDevelopment())
 // Optional: Uncomment if using custom middleware for header validation
 // app.UseMiddleware<TokenValidationMiddleware>(); 
 
+app.UseMiddleware<GlobalErrorHandlerMiddleware>();
+
 app.UseCors(builder => builder
     .AllowAnyOrigin()
     .AllowAnyMethod()
@@ -125,7 +127,7 @@ app.UseHttpsRedirection();
 // Use authentication and authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseRouting();
 app.MapControllers(); // Map attribute routes
 
 app.Run();

@@ -25,3 +25,40 @@ public class TokenValidationMiddleware
         await _next(context);
     }
 }
+
+
+public class GlobalErrorHandlerMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly ILogger<GlobalErrorHandlerMiddleware> _logger;
+
+    public GlobalErrorHandlerMiddleware(RequestDelegate next, ILogger<GlobalErrorHandlerMiddleware> logger)
+    {
+        _next = next;
+        _logger = logger;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        try
+        {
+            await _next(context);
+        }
+        catch (Exception ex)
+        {
+            // Log the detailed error for internal review
+            _logger.LogError(ex, "An unexpected error occurred!");
+
+            // Return a generic 500 error response to the user
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            context.Response.ContentType = "application/json";
+            
+            var errorResponse = new
+            {
+                Message = "Oops! Something went wrong, please call support."
+            };
+
+            await context.Response.WriteAsJsonAsync(errorResponse);
+        }
+    }
+}
