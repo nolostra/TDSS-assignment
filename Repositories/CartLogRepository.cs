@@ -170,8 +170,9 @@ namespace LinenManagementSystem.Repositories
                     EmployeeId = cartLogDto.EmployeeId,
                 };
 
-                if (cartLog.CartLogId == 0) // If new CartLog
+                if (cartLogDto.CartLogId == 0) // If new CartLog
                 {
+
                     await _context.CartLog.AddAsync(cartLog);
                     await _context.SaveChangesAsync(); // Save to generate CartLogId
                 }
@@ -179,14 +180,25 @@ namespace LinenManagementSystem.Repositories
                 {
                     // Check if the CartLog exists
                     var existingCartLog = await _context.CartLog
-                        .FirstOrDefaultAsync(cl => cl.CartLogId == cartLogDto.CartLogId);
+    .FirstOrDefaultAsync(cl => cl.CartLogId == cartLogDto.CartLogId);
 
                     if (existingCartLog == null)
                     {
                         throw new InvalidOperationException($"CartLog with ID {cartLogDto.CartLogId} does not exist.");
                     }
 
-                    _context.CartLog.Update(cartLog);
+                    // Update properties of the existing CartLog
+                    existingCartLog.ReceiptNumber = cartLogDto.ReceiptNumber;
+                    existingCartLog.ReportedWeight = cartLogDto.ReportedWeight;
+                    existingCartLog.ActualWeight = cartLogDto.ActualWeight;
+                    existingCartLog.Comments = cartLogDto.Comments;
+                    existingCartLog.DateWeighed = cartLogDto.DateWeighed;
+                    existingCartLog.CartId = cartLogDto.CartId;
+                    existingCartLog.LocationId = cartLogDto.LocationId;
+                    existingCartLog.EmployeeId = cartLogDto.EmployeeId;
+
+                    // Mark the entity as modified
+                    _context.CartLog.Update(existingCartLog);
                 }
 
                 foreach (var item in cartLogDto.Linen)
@@ -199,7 +211,7 @@ namespace LinenManagementSystem.Repositories
                     {
                         var cartLogDetail = new CartLogDetail
                         {
-                            CartLogId = cartLog.CartLogId, // Use the existing CartLogId
+                            CartLogId = cartLogDto.CartLogId, // Use the existing CartLogId
                             LinenId = item.LinenId,
                             Count = item.Count,
                         };
@@ -207,7 +219,7 @@ namespace LinenManagementSystem.Repositories
                     }
                     else // If CartLogDetail exists, update it
                     {
-                        existingCartLogDetail.CartLogId = cartLog.CartLogId; // Ensure it's set correctly
+                        existingCartLogDetail.CartLogId = cartLogDto.CartLogId; // Ensure it's set correctly
                         existingCartLogDetail.LinenId = item.LinenId;
                         existingCartLogDetail.Count = item.Count;
 
