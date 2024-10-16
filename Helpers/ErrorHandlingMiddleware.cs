@@ -25,7 +25,7 @@ public class TokenValidationMiddleware
         var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
 
         // Check if the token is null or invalid
-        if (string.IsNullOrEmpty(token) || !IsValidToken(token))
+        if (string.IsNullOrEmpty(token) )
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             context.Response.ContentType = "application/json";
@@ -43,12 +43,12 @@ public class TokenValidationMiddleware
         await _next(context);
     }
 
-    private bool IsValidToken(string token)
-    {
-        // Replace with actual token validation logic
+    // private bool IsValidToken(string token)
+    // {
+    //     // Replace with actual token validation logic
         
-        return true; // Replace with actual validation
-    }
+    //     return true; // Replace with actual validation
+    // }
 }
 
 
