@@ -26,8 +26,4 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="LinenManagementSystem.csproj" />
-  </ItemGroup>
-
 </Project>
