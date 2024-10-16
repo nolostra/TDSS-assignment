@@ -8,6 +8,8 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using LinenManagementSystem.DTOs;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace LinenManagementSystem.Tests.IntegrationTests
 {
@@ -16,12 +18,24 @@ namespace LinenManagementSystem.Tests.IntegrationTests
         private readonly CartLogController _controller;
         private readonly Mock<ICartLogService> _mockService;
         private readonly Mock<ILogger<CartLogController>> _mockLogger;
+        private readonly ClaimsPrincipal _user;
 
         public CartLogControllerIntegrationTests()
         {
             _mockService = new Mock<ICartLogService>();
             _mockLogger = new Mock<ILogger<CartLogController>>();
-            _controller = new CartLogController(_mockLogger.Object, _mockService.Object);
+            var claims = new List<Claim>
+                {
+                    new Claim(System.Security.Claims.ClaimTypes.NameIdentifier, "2") // Example employee ID
+                };
+            _user = new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuthType"));
+            _controller = new CartLogController(_mockLogger.Object, _mockService.Object)
+            {
+                ControllerContext = new ControllerContext
+                {
+                    HttpContext = new DefaultHttpContext { User = _user }
+                }
+            };
         }
 
         [Fact]
@@ -70,22 +84,30 @@ namespace LinenManagementSystem.Tests.IntegrationTests
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var returnValue = Assert.IsType<List<CartLogFetch>>(okResult.Value);
-            Assert.Equal(1, returnValue.Count);  // Adjusted to 1 based on the sample data
+            var returnValue = Assert.IsAssignableFrom<IEnumerable<CartLogFetch>>(okResult.Value); // Ensure the value is of the expected type
+            Assert.Single(returnValue);
         }
 
+
+        public class NotFoundResponse
+        {
+            public string Message { get; set; }
+        }
         [Fact]
         public async Task GetCartLogs_ReturnsNotFound_WhenNoLogsExist()
         {
-            // Arrange
+            // Arrange: Simulate no cart logs by returning an empty list
             _mockService.Setup(service => service.GetCartLogsAsync("CLEAN", "HOME", 1))
                         .ReturnsAsync(new List<CartLogFetch>()); // Simulating no cart logs
 
             // Act
             var result = await _controller.GetCartLogs("CLEAN", "HOME", 1);
 
-            // Assert
-            Assert.IsType<NotFoundResult>(result);  // Expecting NotFoundResult if no logs exist
+            var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+            var returnValue = notFoundResult.Value; // Directly get the value
+
+            // Use dynamic or specific property name access
+            Assert.Equal("No cart logs found.", ((dynamic)returnValue).message);
         }
 
         [Fact]
@@ -95,7 +117,7 @@ namespace LinenManagementSystem.Tests.IntegrationTests
             var result = await _controller.GetCartLogs(null, null, null);
 
             // Assert
-            Assert.IsType<BadRequestResult>(result);
+            Assert.IsType<BadRequestObjectResult>(result);
         }
 
         [Fact]
@@ -194,15 +216,15 @@ namespace LinenManagementSystem.Tests.IntegrationTests
             var result = await _controller.DeleteCartLog(cartLogId);
 
             // Assert
-            var okResult = Assert.IsType<OkResult>(result);
+            var okResult = Assert.IsType<OkObjectResult>(result);
         }
 
         [Fact]
         public async Task DeleteCartLog_ReturnsNotFound_WhenCartLogDoesNotExist()
         {
             // Arrange
-            var cartLogId = 99;
-            var employeeId = 1;
+            var cartLogId = 26;
+            var employeeId = 2;
             _mockService.Setup(service => service.DeleteCartLogAsync(cartLogId, employeeId))
                         .ReturnsAsync(false);
 
@@ -210,7 +232,7 @@ namespace LinenManagementSystem.Tests.IntegrationTests
             var result = await _controller.DeleteCartLog(cartLogId);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            Assert.IsType<NotFoundObjectResult>(result);
         }
     }
 }

@@ -8,6 +8,7 @@ using LinenManagementSystem.Services;
 using LinenManagementSystem.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
+using static LinenManagementSystem.Tests.IntegrationTests.CartLogControllerIntegrationTests;
 
 namespace LinenManagementSystem.Controllers
 {
@@ -39,16 +40,36 @@ namespace LinenManagementSystem.Controllers
                 return NotFound(new { message = $"Cart log with ID {cartLogId} not found." });
             }
             _logger.LogInformation($"Cart log with ID {cartLogId} retrieved successfully.");
-            return Ok(new { cartLog , message = "Cart log has been successfully fetched." });
+            return Ok(new { cartLog, message = "Cart log has been successfully fetched." });
         }
+
+
 
 
         [HttpGet]
         public async Task<IActionResult> GetCartLogs([FromQuery] string? cartType, [FromQuery] string? location, [FromQuery] int? employeeId)
         {
+            // Check if all parameters are null
+            if (string.IsNullOrWhiteSpace(cartType) && string.IsNullOrWhiteSpace(location) && !employeeId.HasValue)
+            {
+                // Return BadRequest if all parameters are not provided
+                return BadRequest(new { message = "At least one of cartType, location, or employeeId must be provided." });
+            }
+
+            // Fetch cart logs based on provided parameters
             var cartLogs = await _cartLogService.GetCartLogsAsync(cartType, location, employeeId);
-            _logger.LogInformation($"Fetched -  {cartLogs}");
-            return Ok(new { cartLogs , message = "Cart logs have been successfully fetched." });
+
+            // Check if cart logs are empty and return NotFound
+            if (cartLogs == null || !cartLogs.Any())
+            {
+                return NotFound(new { message = "No cart logs found." });
+            }
+
+
+            // Log the fetched cart logs
+            _logger.LogInformation($"Fetched cart logs: {cartLogs}");
+
+            return Ok(cartLogs);
         }
 
         [HttpPost("upsert")]
@@ -60,10 +81,14 @@ namespace LinenManagementSystem.Controllers
                 _logger.LogWarning("Invalid employee ID in token");
                 return Unauthorized(new { message = "Invalid employee ID in token" });
             }
+            if (cartLog == null || !ModelState.IsValid) // Ensure the cartLog is valid
+            {
+                return BadRequest(new { message = "Invalid cart log data." });
+            }
 
             var updatedCartLog = await _cartLogService.UpsertCartLogAsync(cartLog, employeeId);
             _logger.LogInformation($"Cart log has been successfully upserted.");
-            return Ok(new { cartLogs = updatedCartLog , message = "Cart log has been successfully upserted." });
+            return Ok(new { cartLogs = updatedCartLog, message = "Cart log has been successfully upserted." });
         }
 
         [HttpDelete("{cartLogId}")]
