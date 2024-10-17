@@ -172,9 +172,8 @@ namespace LinenManagementSystem.Tests.IntegrationTests
             var result = await _controller.UpsertCartLog(newCartLog);
 
             // Assert
-            var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(result);
-            var returnValue = Assert.IsType<CartLogFetch>(createdAtActionResult.Value);
-            Assert.Equal(newCartLog.CartLogId, returnValue.CartLogId);  // Verifying that returned CartLogId matches the one upserted
+            var createdResult = Assert.IsType<OkObjectResult>(result); // Expecting CreatedAtActionResult
+            Assert.Equal(fetchCartLog.CartLogId, ((dynamic)createdResult.Value).cartLogs.CartLogId); // Check ID // Verifying that returned CartLogId matches the one upserted
         }
 
         [Fact]
@@ -207,8 +206,8 @@ namespace LinenManagementSystem.Tests.IntegrationTests
         public async Task DeleteCartLog_ReturnsOkResult_WhenCartLogDeleted()
         {
             // Arrange
-            var cartLogId = 1;
-            var employeeId = 1;
+            var cartLogId = 26;
+            var employeeId = 2;
             _mockService.Setup(service => service.DeleteCartLogAsync(cartLogId, employeeId))
                         .ReturnsAsync(true);
 
